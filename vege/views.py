@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect
 from .models import *
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
-
+@login_required(login_url="/login/")
 def recipes(request):
     if request.method=="POST":
         data=request.POST
@@ -52,8 +54,34 @@ def delete_recipe(req,id):
     return redirect('/vege/')
    
     
-def login(req):
+def login_page(req):
+    if req.method == 'POST':
+        username=req.POST.get('username')
+        password=req.POST.get('password')
+        
+        if not User.objects.filter(username=username).exists():
+            messages.error(req,'''user doesn't exist''')
+            return redirect('/login/')
+            # user=User.objects.get(username=username)
+            # if user.check_password(password):
+            #     return redirect('/vege/')
+            # else:
+            #     messages.info(req,'invalid password')
+            #     return redirect('/login/')
+        user = authenticate(username=username,password=password)
+        
+        if user is None:
+            messages.error(req,'''incorrect password''')
+            return redirect('/login/')
+        else:
+            login(req,user)
+            return redirect('/vege/')
+            
     return render(req,'login.html')
+
+def logout_page(req):
+    logout(req)
+    return redirect('/login/')
 
 def register(req):
     if req.method == 'POST':
