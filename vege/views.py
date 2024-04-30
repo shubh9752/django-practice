@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect
 from .models import *
+from django.contrib.auth.models import User
+from django.contrib import messages
 
 # Create your views here.
 
@@ -18,7 +20,7 @@ def recipes(request):
     queryset=Recipe.objects.all()
     
     if request.GET.get('search'):
-        queryset=queryset.filter(name__icontains = (request.GET.get('search')))
+        queryset=queryset.filter(name__icontains = (request.GET.get('search'))) #__icontains is a django keyword which checks or works like includes
     context={"recipes":queryset}
         
     
@@ -50,3 +52,30 @@ def delete_recipe(req,id):
     return redirect('/vege/')
    
     
+def login(req):
+    return render(req,'login.html')
+
+def register(req):
+    if req.method == 'POST':
+        first_name=req.POST.get('fname')
+        last_name=req.POST.get('lname')
+        username=req.POST.get('username')
+        password=req.POST.get('password')
+        
+        user = User.objects.filter(username=username)
+        
+        if user.exists():
+            messages.info(req,'username already exists')
+            return redirect('/register/')
+        
+        user = User.objects.create(
+            first_name=first_name,
+            last_name=last_name ,
+            username=username,         
+        )
+        user.set_password(password) #to ncript password
+        user.save()
+        messages.info(req,'registered successfuly')
+        return redirect('/register/')
+    
+    return render(req,'register.html')
